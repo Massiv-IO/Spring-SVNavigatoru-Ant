@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="SVNavigatoru" basedir="." default="usage">
+	<property file="build.properties" />
+
+	<property name="src.dir" value="src" />
+	<property name="web.dir" value="war" />
+	<property name="build.dir" value="${web.dir}/WEB-INF/classes" />
+	<property name="test.dir" value="test" />
+
+	<property name="name" value="SVNavigatoru" />
+	<property name="targetVersion" value="1.6" />
+	<property name="sourceVersion" value="1.6" />
+
+	<path id="master.classpath">
+		<fileset dir="${web.dir}/WEB-INF/lib">
+			<include name="*.jar" />
+		</fileset>
+		<!-- We need the servlet API classes: -->
+		<!-- * for Tomcat 5/6/7 use servlet-api.jar -->
+		<!-- * for other app servers - check the docs -->
+		<fileset dir="${appserver.lib}">
+			<include name="servlet*.jar" />
+		</fileset>
+		<pathelement path="${build.dir}" />
+	</path>
+
+	<path id="test.classpath">
+		<fileset dir="${web.dir}/WEB-INF/lib">
+			<include name="*.jar" />
+		</fileset>
+		<pathelement path="${build.dir}" />
+		<pathelement path="${test.dir}" />
+		<pathelement path="${web.dir}/WEB-INF/classes" />
+	</path>
+
+	<target name="usage">
+		<echo message="" />
+		<echo message="${name} build file" />
+		<echo message="-----------------------------------" />
+		<echo message="" />
+		<echo message="Available targets are:" />
+		<echo message="" />
+		<echo message="build     --> Build the application" />
+		<echo message="deploy    --> Deploy application as directory" />
+		<echo message="deploywar --> Deploy application as a WAR file" />
+		<echo message="" />
+		<echo message="install   --> Install application on Tomcat" />
+		<echo message="start     --> Start deployed application on Tomcat" />
+		<echo message="stop      --> Stop deployed application on Tomcat" />
+		<echo message="reload    --> Reload deployed application on Tomcat" />
+		<echo message="list      --> List all applications deployed on Tomcat" />
+		<echo message="" />
+		<echo message="all       --> Does clean -> build -> tests -> stop -> undeploy -> deploy -> start" />
+	</target>
+
+	<target name="build" description="Compile main source tree java files">
+		<mkdir dir="${build.dir}" />
+		<javac destdir="${build.dir}" source="${sourceVersion}" target="${targetVersion}" debug="true" deprecation="false" optimize="false" failonerror="true" includeAntRuntime="false">
+			<src path="${src.dir}" />
+			<classpath refid="master.classpath" />
+		</javac>
+	</target>
+
+	<target name="deploy" depends="build" description="Deploy application">
+		<copy todir="${deploy.path}/${name}" preservelastmodified="true">
+			<fileset dir="${web.dir}">
+				<include name="**/*.*" />
+				<exclude name="**/servlet-api.jar" />
+			</fileset>
+		</copy>
+	</target>
+
+	<target name="deploywar" depends="build" description="Deploy application as a WAR file">
+		<war destfile="${name}.war" webxml="${web.dir}/WEB-INF/web.xml">
+			<fileset dir="${web.dir}">
+				<include name="**/*.*" />
+			</fileset>
+		</war>
+		<copy todir="${deploy.path}" preservelastmodified="true">
+			<fileset dir=".">
+				<include name="*.war" />
+			</fileset>
+		</copy>
+	</target>
+
+	<target name="clean" description="Clean output directories">
+		<delete>
+			<fileset dir="${build.dir}">
+				<include name="**/*.class" />
+			</fileset>
+		</delete>
+	</target>
+
+	<target name="undeploy" description="Un-Deploy application">
+		<delete>
+			<fileset dir="${deploy.path}/${name}">
+				<include name="**/*.*" />
+			</fileset>
+		</delete>
+	</target>
+	
+	<target name="all" depends="clean, build, tests, stop, undeploy, deploy, start"
+		description="Does clean -> build -> tests -> stop -> undeploy -> deploy -> start">
+	</target>
+
+	<!-- ============================================================== -->
+	<!-- Tomcat tasks - remove these if you don't have Tomcat installed -->
+	<!-- ============================================================== -->
+
+	<path id="catalina-ant.classpath">
+		<!-- We need the Catalina jars for Tomcat -->
+		<!-- * for other app servers - check the docs -->
+		<fileset dir="${appserver.lib}">
+			<include name="catalina-ant.jar" />
+		</fileset>
+	</path>
+
+	<taskdef name="install" classname="org.apache.catalina.ant.InstallTask">
+		<classpath refid="catalina-ant.classpath" />
+	</taskdef>
+	<taskdef name="start" classname="org.apache.catalina.ant.StartTask">
+		<classpath refid="catalina-ant.classpath" />
+	</taskdef>
+	<taskdef name="stop" classname="org.apache.catalina.ant.StopTask">
+		<classpath refid="catalina-ant.classpath" />
+	</taskdef>
+	<taskdef name="reload" classname="org.apache.catalina.ant.ReloadTask">
+		<classpath refid="catalina-ant.classpath" />
+	</taskdef>
+	<taskdef name="list" classname="org.apache.catalina.ant.ListTask">
+		<classpath refid="catalina-ant.classpath" />
+	</taskdef>
+
+	<target name="install" description="Install application on Tomcat">
+		<install url="${tomcat.manager.url}" username="${tomcat.manager.username}" password="${tomcat.manager.password}" path="/${name}" war="${name}" />
+	</target>
+
+	<target name="start" description="Start deployed application on Tomcat">
+		<start url="${tomcat.manager.url}" username="${tomcat.manager.username}" password="${tomcat.manager.password}" path="/${name}" />
+	</target>
+
+	<target name="stop" description="Stop deployed application on Tomcat">
+		<stop url="${tomcat.manager.url}" username="${tomcat.manager.username}" password="${tomcat.manager.password}" path="/${name}" />
+	</target>
+
+	<target name="reload" description="Reload deployed application on Tomcat">
+		<reload url="${tomcat.manager.url}" username="${tomcat.manager.username}" password="${tomcat.manager.password}" path="/${name}" />
+	</target>
+
+	<target name="list" description="List all applications deployed on Tomcat">
+		<list url="${tomcat.manager.url}" username="${tomcat.manager.username}" password="${tomcat.manager.password}" />
+	</target>
+
+	<!-- ================ -->
+	<!-- End Tomcat tasks -->
+	<!-- ================ -->
+
+	<!-- ===== -->
+	<!-- Tests -->
+	<!-- ===== -->
+
+	<target name="buildtests" description="Compile test tree java files">
+		<mkdir dir="${build.dir}" />
+		<javac destdir="${build.dir}" source="${sourceVersion}" target="${targetVersion}" debug="true" deprecation="false" optimize="false" failonerror="true" includeAntRuntime="false">
+			<src path="${test.dir}" />
+			<classpath refid="master.classpath" />
+		</javac>
+	</target>
+
+	<target name="tests" depends="build, buildtests" description="Run tests">
+		<junit printsummary="on" fork="false" haltonfailure="false" failureproperty="tests.failed" showoutput="true">
+			<classpath refid="test.classpath" />
+			<formatter type="brief" usefile="false" />
+			<batchtest>
+				<fileset dir="${build.dir}">
+					<include name="**/*Tests.*" />
+					<exclude name="**/Jdbc*Tests.*" />
+				</fileset>
+			</batchtest>
+		</junit>
+
+		<fail if="tests.failed">
+			tests.failed=${tests.failed}
+			***********************************************************
+			***********************************************************
+			**** One or more tests failed! Check the output ... ****
+			***********************************************************
+			***********************************************************
+		</fail>
+	</target>
+
+	<!-- ========= -->
+	<!-- End Tests -->
+	<!-- ========= -->
+
+</project>
