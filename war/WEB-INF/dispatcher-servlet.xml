@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+						http://www.springframework.org/schema/beans/spring-beans-2.5.xsd">
+
+	<!-- the application context definition for the "dispatcher" DispatcherServlet -->
+
+	<!-- declares the MessageSource bean -->
+	<bean id="messageSource"
+		class="org.springframework.context.support.ReloadableResourceBundleMessageSource">
+		<property name="cacheSeconds" value="3" />
+		<property name="defaultEncoding" value="UTF-8" />
+		<property name="basenames">
+			<list>
+				<value>classpath:locale/messages</value>
+			</list>
+		</property>
+	</bean>
+
+	<!-- declare the interceptor -->
+	<bean id="localeChangeInterceptor"
+		class="org.springframework.web.servlet.i18n.LocaleChangeInterceptor">
+		<property name="paramName" value="lang" />
+	</bean>
+
+	<!-- declare the resolver -->
+	<bean id="localeResolver"
+		class="org.springframework.web.servlet.i18n.CookieLocaleResolver">
+		<property name="defaultLocale" value="cs_CZ" />
+	</bean>
+
+	<bean id="urlMapping"
+		class="org.springframework.web.servlet.handler.SimpleUrlHandlerMapping">
+		<property name="mappings">
+			<value>
+				/hello.html=inventoryController
+				/priceincrease.html=priceIncreaseFormController
+				/svj-navigatoru.html=svjNavigatoruController
+				/vybor.html=vyborController
+			</value>
+		</property>
+		<property name="interceptors">
+			<list>
+				<!-- adding locale interceptor bean -->
+				<ref local="localeChangeInterceptor" />
+			</list>
+		</property>
+	</bean>
+
+
+
+	<bean id="inventoryController" class="inventorysystem.web.InventoryController">
+		<property name="productManager" ref="productManager" />
+	</bean>
+
+	<bean id="priceIncreaseFormController" class="inventorysystem.web.PriceIncreaseFormController">
+		<property name="sessionForm" value="true" />
+		<property name="commandName" value="priceIncrease" />
+		<property name="commandClass" value="inventorysystem.service.PriceIncrease" />
+		<property name="validator">
+			<bean class="inventorysystem.service.PriceIncreaseValidator" />
+		</property>
+		<property name="formView" value="priceincrease" />
+		<property name="successView" value="hello.html" />
+		<property name="productManager" ref="productManager" />
+	</bean>
+
+	<bean id="svjNavigatoruController" class="inventorysystem.web.SvjNavigatoruController" />
+
+	<bean id="vyborController" class="inventorysystem.web.VyborController" />
+
+
+
+	<bean id="viewResolver"
+		class="org.springframework.web.servlet.view.ResourceBundleViewResolver">
+		<property name="basename" value="views" />
+	</bean>
+
+	<bean id="tilesConfigurer"
+		class="org.springframework.web.servlet.view.tiles2.TilesConfigurer">
+		<property name="definitions">
+			<list>
+				<value>/WEB-INF/tiles-defs.xml</value>
+			</list>
+		</property>
+	</bean>
+	
+	
+	<!-- Moved from applicationContext.xml. -->
+	<import resource="dataSource.xml" />
+	<import resource="hibernate.xml" />
+	<import resource="model-beans/model-beans.xml" />
+
+</beans>

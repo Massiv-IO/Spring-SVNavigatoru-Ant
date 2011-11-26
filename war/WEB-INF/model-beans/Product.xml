@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+						http://www.springframework.org/schema/beans/spring-beans-2.5.xsd">
+
+	<!-- Product BO (Business Object) -->
+	<bean id="product" class="inventorysystem.domain.Product">
+		<property name="productDao" ref="productDao" />
+	</bean>
+
+	<!-- Product DAO (Data Access Object) -->
+	<!-- <bean id="productDao" class="inventorysystem.repository.impl.ProductDaoImpl">
+		<property name="dataSource" ref="dataSource" />
+	</bean> -->
+	<bean id="productDao" class="inventorysystem.repository.impl.HibernateProductDao">
+		<property name="sessionFactory" ref="sessionFactory" />
+	</bean>
+
+</beans>
